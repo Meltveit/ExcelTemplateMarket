@@ -281,10 +281,12 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
+        <Card>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -656,6 +658,17 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
         </Form>
       </CardContent>
     </Card>
+      </div>
+      <div>
+        <div className="sticky top-6">
+          <h3 className="text-lg font-medium mb-4">Template Preview</h3>
+          <TemplatePreview template={previewData} />
+          <div className="mt-4 text-sm text-muted-foreground">
+            This is how your template will appear to customers in the marketplace.
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
