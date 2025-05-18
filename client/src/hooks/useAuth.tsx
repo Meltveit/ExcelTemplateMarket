@@ -8,16 +8,23 @@ export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // In this simplified implementation, we're just checking if the admin credentials
-  // are correct in basic auth. In a real app, this would use a proper auth system.
+  // Check authentication against the database through the server
   const checkAuthentication = async () => {
     setIsLoading(true);
     try {
-      // We'll just make a request to an admin-only endpoint to see if we're authenticated
-      await apiRequest('GET', '/api/admin/templates');
-      setIsAuthenticated(true);
+      // Use our dedicated auth check endpoint to verify authentication
+      const response = await apiRequest('GET', '/api/admin/check-auth');
+      const data = await response.json();
+      
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
     } catch (error) {
+      // If there's an error or 401, we're not authenticated
       setIsAuthenticated(false);
+      localStorage.removeItem('auth'); // Clear any invalid credentials
     } finally {
       setIsLoading(false);
     }
@@ -30,21 +37,27 @@ export function useAuth() {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Use the provided email and password directly
-      // The server now supports these credentials
+      // Store credentials in localStorage for API requests
       const credentials = btoa(`${email}:${password}`);
       localStorage.setItem('auth', credentials);
       
-      // Try to fetch admin data to verify credentials
-      await apiRequest('GET', '/api/admin/templates');
+      // Verify credentials against our auth check endpoint
+      const response = await apiRequest('GET', '/api/admin/check-auth');
+      const data = await response.json();
       
-      setIsAuthenticated(true);
-      toast({
-        title: 'Login successful',
-        description: 'Welcome to the admin panel',
-      });
-      return true;
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+        toast({
+          title: 'Login successful',
+          description: 'Welcome to the admin panel',
+        });
+        return true;
+      } else {
+        // This shouldn't normally happen, but just in case
+        throw new Error('Authentication failed');
+      }
     } catch (error) {
+      // Clear invalid credentials
       localStorage.removeItem('auth');
       setIsAuthenticated(false);
       toast({

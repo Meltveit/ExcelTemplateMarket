@@ -78,7 +78,7 @@ const isAdmin = async (req: Request, res: Response, next: () => void) => {
       const [username, password] = credentials.split(':');
       
       // Validate user credentials against the database
-      const user = await storage.getUserByUsername(username);
+      const user = await dbStorage.getUserByUsername(username);
       
       if (user && user.password === password && user.isAdmin) {
         // Store user in request for potential later use
@@ -388,6 +388,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "Failed to delete template" });
     }
+  });
+
+  // Admin auth check endpoint
+  app.get("/api/admin/check-auth", isAdmin, (req, res) => {
+    // If middleware passes, user is authenticated
+    res.json({ 
+      authenticated: true,
+      user: (req as any).user
+    });
   });
 
   app.get("/api/admin/orders", isAdmin, async (req, res) => {
