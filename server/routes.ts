@@ -1,10 +1,12 @@
 import type { Express, Request, Response } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import Stripe from "stripe";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import multer from "multer";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('Missing STRIPE_SECRET_KEY environment variable. Please set it for production use.');
@@ -13,6 +15,55 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = process.env.STRIPE_SECRET_KEY ? 
   new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" }) : 
   null;
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    let uploadPath = 'public/uploads/';
+    
+    if (file.fieldname === 'template') {
+      uploadPath += 'templates';
+    } else if (file.fieldname === 'image') {
+      uploadPath += 'images';
+    }
+    
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    // Create a unique filename with original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+// Set up file filter to only allow certain file types
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.fieldname === 'template') {
+    // Allow Excel files
+    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+        file.mimetype === 'application/vnd.ms-excel') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel files are allowed'));
+    }
+  } else if (file.fieldname === 'image') {
+    // Allow image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  } else {
+    cb(null, false);
+  }
+};
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 // Simple authentication middleware for admin routes
 const isAdmin = (req: Request, res: Response, next: () => void) => {
@@ -39,6 +90,9 @@ const generateDownloadLink = (orderId: number, templateId: number) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static files from the 'public' directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+  
   // Public API routes
   app.get("/api/templates", async (req, res) => {
     try {
