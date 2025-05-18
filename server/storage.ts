@@ -46,10 +46,17 @@ export class MemStorage implements IStorage {
     this.orderCurrentId = 1;
     this.userCurrentId = 1;
     
-    // Add an admin user by default
+    // Add admin users
     this.createUser({
       username: "admin",
       password: "admin123", // In a real app, this would be hashed
+      isAdmin: true
+    });
+    
+    // Add the specific admin user with email credentials
+    this.createUser({
+      username: "meltveit00@gmail.com",
+      password: "Chriss3214", // In a real app, this would be hashed
       isAdmin: true
     });
     

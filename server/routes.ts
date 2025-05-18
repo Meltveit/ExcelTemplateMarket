@@ -65,8 +65,8 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// Simple authentication middleware for admin routes
-const isAdmin = (req: Request, res: Response, next: () => void) => {
+// Authentication middleware for admin routes
+const isAdmin = async (req: Request, res: Response, next: () => void) => {
   // Check for the Authorization header
   const authHeader = req.headers.authorization;
   
@@ -77,9 +77,12 @@ const isAdmin = (req: Request, res: Response, next: () => void) => {
       const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
       const [username, password] = credentials.split(':');
       
-      // Check if credentials match the valid admin credentials
-      if ((username === 'meltveit00@gmail.com' && password === 'Chriss3214') || 
-          (username === 'admin' && password === 'admin123')) {
+      // Validate user credentials against the database
+      const user = await storage.getUserByUsername(username);
+      
+      if (user && user.password === password && user.isAdmin) {
+        // Store user in request for potential later use
+        (req as any).user = user;
         return next();
       }
     } catch (error) {
