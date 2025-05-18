@@ -58,11 +58,6 @@ const Header = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Link href="/admin" className="hidden md:inline-flex">
-              <Button variant="outline" className="text-primary border-primary">
-                Admin
-              </Button>
-            </Link>
             <Button
               variant="ghost"
               size="icon"
@@ -107,13 +102,7 @@ const Header = () => {
             >
               Contact
             </Link>
-            <Link 
-              href="/admin" 
-              className="block font-medium hover:text-primary"
-              onClick={closeMobileMenu}
-            >
-              Admin
-            </Link>
+
           </div>
         </div>
       )}
