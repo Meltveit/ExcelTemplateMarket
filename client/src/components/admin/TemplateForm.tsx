@@ -1,12 +1,13 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { insertTemplateSchema } from '@shared/schema';
+import { insertTemplateSchema, Template } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { queryClient } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
+import TemplatePreview from './TemplatePreview';
 
 import {
   Form,
@@ -63,6 +64,8 @@ const formSchema = insertTemplateSchema.extend({
   thumbnails: z.string().transform(str => 
     str.split('\n').filter(line => line.trim() !== '')
   ),
+  stripeProductId: z.string().nullable().optional().transform(val => val || null),
+  stripePriceId: z.string().nullable().optional().transform(val => val || null),
 });
 
 const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFormProps) => {
@@ -75,6 +78,7 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
   const [imageUploadError, setImageUploadError] = useState('');
   const templateFileInputRef = useRef<HTMLInputElement>(null);
   const imageFileInputRef = useRef<HTMLInputElement>(null);
+  const [previewData, setPreviewData] = useState<Partial<Template>>(defaultValues || {});
 
   // Transform array fields into string for editing
   const prepareDefaultValues = (values: any) => {
