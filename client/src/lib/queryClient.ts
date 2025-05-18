@@ -12,9 +12,23 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Get auth credentials from localStorage if available
+  const auth = localStorage.getItem('auth');
+  const headers: Record<string, string> = {};
+  
+  // Add Authorization header if auth is available
+  if (auth) {
+    headers['Authorization'] = `Basic ${auth}`;
+  }
+  
+  // Add Content-Type for JSON data
+  if (data) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });

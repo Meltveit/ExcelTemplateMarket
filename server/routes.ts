@@ -67,19 +67,27 @@ const upload = multer({
 
 // Simple authentication middleware for admin routes
 const isAdmin = (req: Request, res: Response, next: () => void) => {
-  // In a real app, this would check for a valid session and admin rights
-  // For now, we'll just check if the authorization header contains "admin:admin123"
+  // Check for the Authorization header
   const authHeader = req.headers.authorization;
+  
   if (authHeader) {
-    const base64Credentials = authHeader.split(' ')[1];
-    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
-    const [username, password] = credentials.split(':');
-    
-    if (username === 'admin' && password === 'admin123') {
-      return next();
+    try {
+      // Extract and decode the credentials
+      const base64Credentials = authHeader.split(' ')[1];
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
+      const [username, password] = credentials.split(':');
+      
+      // Check if credentials match the valid admin credentials
+      if ((username === 'meltveit00@gmail.com' && password === 'Chriss3214') || 
+          (username === 'admin' && password === 'admin123')) {
+        return next();
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
     }
   }
   
+  // If no valid credentials, return 401 Unauthorized
   res.status(401).json({ message: 'Unauthorized' });
 };
 
