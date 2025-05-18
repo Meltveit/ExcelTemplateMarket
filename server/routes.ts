@@ -17,7 +17,7 @@ const stripe = process.env.STRIPE_SECRET_KEY ?
   null;
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+const fileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath = 'public/uploads/';
     
@@ -60,7 +60,7 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
 };
 
 const upload = multer({ 
-  storage: storage,
+  storage: fileStorage,
   fileFilter: fileFilter,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
@@ -96,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public API routes
   app.get("/api/templates", async (req, res) => {
     try {
-      const templates = await storage.getTemplates();
+      const templates = await dbStorage.getTemplates();
       res.json(templates);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch templates" });
@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const template = await storage.getTemplateById(id);
+      const template = await dbStorage.getTemplateById(id);
       
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
@@ -121,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/category/:category", async (req, res) => {
     try {
       const { category } = req.params;
-      const templates = await storage.getTemplatesByCategory(category);
+      const templates = await dbStorage.getTemplatesByCategory(category);
       res.json(templates);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch templates by category" });
@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Template ID is required" });
       }
       
-      const template = await storage.getTemplateById(parseInt(templateId));
+      const template = await dbStorage.getTemplateById(parseInt(templateId));
       
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
@@ -195,14 +195,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract the template ID from the metadata
       const templateId = parseInt(paymentIntent.metadata.templateId);
-      const template = await storage.getTemplateById(templateId);
+      const template = await dbStorage.getTemplateById(templateId);
       
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
       
       // Create an order in your database
-      const order = await storage.createOrder({
+      const order = await dbStorage.createOrder({
         templateId,
         customerEmail: paymentIntent.receipt_email || "unknown@example.com",
         customerName: "",
@@ -213,10 +213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update the download link with the real order ID
       const downloadLink = generateDownloadLink(order.id, templateId);
-      await storage.updateOrder(order.id, { downloadLink });
+      await dbStorage.updateOrder(order.id, { downloadLink });
       
       // Increment the template download count
-      await storage.incrementTemplateDownloadCount(templateId);
+      await dbStorage.incrementTemplateDownloadCount(templateId);
     }
     
     res.json({ received: true });
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if there's an order with this payment ID
-      const order = await storage.getOrderByPaymentId(paymentIntentId);
+      const order = await dbStorage.getOrderByPaymentId(paymentIntentId);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -256,18 +256,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In a real app, you would validate the token here
       
-      const order = await storage.getOrderById(orderId);
+      const order = await dbStorage.getOrderById(orderId);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
       
-      const template = await storage.getTemplateById(templateId);
+      const template = await dbStorage.getTemplateById(templateId);
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
       
       // Increment the download count
-      await storage.incrementOrderDownloadCount(orderId);
+      await dbStorage.incrementOrderDownloadCount(orderId);
       
       // In a real app, you would serve the actual file here
       // For now, we'll just return a success message
@@ -292,17 +292,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API routes
   app.get("/api/admin/templates", isAdmin, async (req, res) => {
     try {
-      const templates = await storage.getTemplates();
+      const templates = await dbStorage.getTemplates();
       res.json(templates);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch templates" });
     }
   });
 
+  // File upload endpoints for templates
+  app.post("/api/admin/upload/template", isAdmin, upload.single('template'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No template file uploaded" });
+      }
+      
+      // Return the file path for saving in the database
+      const filePath = `/uploads/templates/${req.file.filename}`;
+      res.json({ 
+        success: true, 
+        filePath: filePath,
+        originalName: req.file.originalname 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: `Error uploading template: ${error.message}` });
+    }
+  });
+  
+  // File upload endpoint for template images
+  app.post("/api/admin/upload/image", isAdmin, upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file uploaded" });
+      }
+      
+      // Return the file path for saving in the database
+      const filePath = `/uploads/images/${req.file.filename}`;
+      res.json({ 
+        success: true, 
+        filePath: filePath,
+        originalName: req.file.originalname 
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: `Error uploading image: ${error.message}` });
+    }
+  });
+
+  // Create template with form data
   app.post("/api/admin/templates", isAdmin, async (req, res) => {
     try {
       const template = req.body;
-      const newTemplate = await storage.createTemplate(template);
+      const newTemplate = await dbStorage.createTemplate(template);
       res.status(201).json(newTemplate);
     } catch (error) {
       res.status(500).json({ message: "Failed to create template" });
@@ -313,7 +352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const templateUpdate = req.body;
-      const updatedTemplate = await storage.updateTemplate(id, templateUpdate);
+      const updatedTemplate = await dbStorage.updateTemplate(id, templateUpdate);
       
       if (!updatedTemplate) {
         return res.status(404).json({ message: "Template not found" });
@@ -328,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/templates/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const result = await storage.deleteTemplate(id);
+      const result = await dbStorage.deleteTemplate(id);
       
       if (!result) {
         return res.status(404).json({ message: "Template not found" });
@@ -342,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/orders", isAdmin, async (req, res) => {
     try {
-      const orders = await storage.getOrders();
+      const orders = await dbStorage.getOrders();
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch orders" });
@@ -352,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/orders/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const order = await storage.getOrderById(id);
+      const order = await dbStorage.getOrderById(id);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,7 +31,14 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { 
+  Loader2, 
+  Upload, 
+  FileSpreadsheet, 
+  Image as ImageIcon,
+  Check, 
+  X
+} from 'lucide-react';
 
 interface TemplateFormProps {
   templateId?: number;
