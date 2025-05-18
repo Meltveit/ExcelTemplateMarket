@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  email: z.string().email('Valid email is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -45,14 +45,14 @@ const AdminLogin = () => {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
-    const success = await login(values.username, values.password);
+    const success = await login(values.email, values.password);
     setIsLoading(false);
     
     if (success) {
@@ -80,12 +80,12 @@ const AdminLogin = () => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="admin" {...field} />
+                        <Input placeholder="your@email.com" type="email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -125,9 +125,9 @@ const AdminLogin = () => {
             
             <div className="mt-6 text-center text-sm text-muted-foreground">
               <p>
-                Default admin credentials (for demo only):<br />
-                Username: admin<br />
-                Password: admin123
+                Admin credentials:<br />
+                Email: meltveit00@gmail.com<br />
+                Password: Chriss3214
               </p>
             </div>
             

@@ -27,28 +27,34 @@ export function useAuth() {
     checkAuthentication();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Set the basic auth header for all future requests
-      const credentials = btoa(`${username}:${password}`);
-      localStorage.setItem('auth', credentials);
-      
-      // Try to fetch admin data to verify credentials
-      await apiRequest('GET', '/api/admin/templates');
-      
-      setIsAuthenticated(true);
-      toast({
-        title: 'Login successful',
-        description: 'Welcome to the admin panel',
-      });
-      return true;
+      // Verify the hardcoded credentials
+      if (email === 'meltveit00@gmail.com' && password === 'Chriss3214') {
+        // Set the basic auth header for all future requests - still using admin:admin123
+        // for compatibility with the server authentication
+        const credentials = btoa('admin:admin123');
+        localStorage.setItem('auth', credentials);
+        
+        // Try to fetch admin data to verify credentials
+        await apiRequest('GET', '/api/admin/templates');
+        
+        setIsAuthenticated(true);
+        toast({
+          title: 'Login successful',
+          description: 'Welcome to the admin panel',
+        });
+        return true;
+      } else {
+        throw new Error('Invalid credentials');
+      }
     } catch (error) {
       localStorage.removeItem('auth');
       setIsAuthenticated(false);
       toast({
         title: 'Login failed',
-        description: 'Invalid username or password',
+        description: 'Invalid email or password',
         variant: 'destructive',
       });
       return false;
