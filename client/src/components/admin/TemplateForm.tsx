@@ -109,6 +109,29 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
       filePath: '',
     },
   });
+  
+  // Update preview data whenever form values change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      // Convert string arrays back to arrays for preview
+      const formattedPreview = {
+        ...value,
+        features: typeof value.features === 'string' 
+          ? value.features.split('\n').filter(line => line.trim() !== '') 
+          : value.features,
+        compatibility: typeof value.compatibility === 'string' 
+          ? value.compatibility.split('\n').filter(line => line.trim() !== '') 
+          : value.compatibility,
+        thumbnails: typeof value.thumbnails === 'string' 
+          ? value.thumbnails.split('\n').filter(line => line.trim() !== '') 
+          : value.thumbnails,
+        price: typeof value.price === 'string' && value.price ? parseFloat(value.price) : value.price
+      };
+      setPreviewData(formattedPreview);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
 
   // Handle template file upload
   const handleTemplateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
