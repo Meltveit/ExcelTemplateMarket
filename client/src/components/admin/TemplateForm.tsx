@@ -69,6 +69,12 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingTemplate, setIsUploadingTemplate] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [templateUploadError, setTemplateUploadError] = useState('');
+  const [imageUploadError, setImageUploadError] = useState('');
+  const templateFileInputRef = useRef<HTMLInputElement>(null);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
 
   // Transform array fields into string for editing
   const prepareDefaultValues = (values: any) => {
@@ -99,6 +105,118 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
       filePath: '',
     },
   });
+
+  // Handle template file upload
+  const handleTemplateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      setTemplateUploadError('Please upload an Excel file (.xlsx or .xls)');
+      return;
+    }
+
+    setIsUploadingTemplate(true);
+    setTemplateUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('template', file);
+
+      const response = await fetch('/api/admin/upload/template', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:admin123')
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload template file');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        form.setValue('filePath', data.filePath);
+        toast({
+          title: "Template Uploaded",
+          description: `${file.name} has been uploaded successfully.`,
+        });
+      }
+    } catch (error: any) {
+      setTemplateUploadError(error.message || 'Error uploading template');
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload template file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingTemplate(false);
+    }
+  };
+
+  // Handle image file upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type is an image
+    if (!file.type.startsWith('image/')) {
+      setImageUploadError('Please upload an image file');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setImageUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/admin/upload/image', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:admin123')
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image file');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        form.setValue('mainImage', data.filePath);
+        toast({
+          title: "Image Uploaded",
+          description: `${file.name} has been uploaded successfully.`,
+        });
+      }
+    } catch (error: any) {
+      setImageUploadError(error.message || 'Error uploading image');
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload image file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const triggerTemplateFileUpload = () => {
+    if (templateFileInputRef.current) {
+      templateFileInputRef.current.click();
+    }
+  };
+
+  const triggerImageFileUpload = () => {
+    if (imageFileInputRef.current) {
+      imageFileInputRef.current.click();
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -273,12 +391,66 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
                 name="mainImage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Main Image URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/image.jpg" {...field} />
-                    </FormControl>
+                    <FormLabel>Main Image</FormLabel>
+                    <div className="space-y-3">
+                      <FormControl>
+                        <Input placeholder="https://example.com/image.jpg" {...field} />
+                      </FormControl>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          ref={imageFileInputRef}
+                          onChange={handleImageUpload}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={triggerImageFileUpload}
+                          className="w-full"
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <ImageIcon className="mr-2 h-4 w-4" />
+                              Upload Image
+                            </>
+                          )}
+                        </Button>
+                        
+                        {field.value && (
+                          <div className="mt-2">
+                            <div className="text-sm font-medium mb-1">Current Image:</div>
+                            <div className="relative w-32 h-32 rounded-md border overflow-hidden">
+                              <img 
+                                src={field.value}
+                                alt="Template preview" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image';
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {imageUploadError && (
+                          <div className="text-destructive text-sm flex items-center mt-1">
+                            <X className="h-4 w-4 mr-1" />
+                            {imageUploadError}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <FormDescription>
-                      URL to the main image for this template.
+                      Upload or provide a URL for the main image of this template.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -290,12 +462,57 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
                 name="filePath"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Excel File Path</FormLabel>
-                    <FormControl>
-                      <Input placeholder="/templates/financial-dashboard.xlsx" {...field} />
-                    </FormControl>
+                    <FormLabel>Excel Template File</FormLabel>
+                    <div className="space-y-3">
+                      <FormControl>
+                        <Input placeholder="/templates/financial-dashboard.xlsx" {...field} />
+                      </FormControl>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <input 
+                          type="file" 
+                          accept=".xlsx,.xls" 
+                          className="hidden"
+                          ref={templateFileInputRef}
+                          onChange={handleTemplateUpload}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={triggerTemplateFileUpload}
+                          className="w-full"
+                          disabled={isUploadingTemplate}
+                        >
+                          {isUploadingTemplate ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <FileSpreadsheet className="mr-2 h-4 w-4" />
+                              Upload Excel Template
+                            </>
+                          )}
+                        </Button>
+                        
+                        {field.value && (
+                          <div className="flex items-center text-sm text-green-600 mt-1">
+                            <Check className="h-4 w-4 mr-1" />
+                            Template file uploaded
+                          </div>
+                        )}
+                        
+                        {templateUploadError && (
+                          <div className="text-destructive text-sm flex items-center mt-1">
+                            <X className="h-4 w-4 mr-1" />
+                            {templateUploadError}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <FormDescription>
-                      Path to the Excel template file.
+                      Upload your Excel template file (.xlsx or .xls).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -353,7 +570,14 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
                   <FormItem>
                     <FormLabel>Stripe Product ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="prod_XXXXXXXXXXXXX" {...field} />
+                      <Input 
+                        placeholder="prod_XXXXXXXXXXXXX" 
+                        value={field.value || ''} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
                     <FormDescription>
                       The Stripe product ID (optional).
@@ -370,7 +594,14 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
                   <FormItem>
                     <FormLabel>Stripe Price ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="price_XXXXXXXXXXXXX" {...field} />
+                      <Input 
+                        placeholder="price_XXXXXXXXXXXXX" 
+                        value={field.value || ''} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
                     <FormDescription>
                       The Stripe price ID (optional).
