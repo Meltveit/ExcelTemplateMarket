@@ -31,7 +31,7 @@ const CheckoutForm = ({ price, templateName }: CheckoutFormProps) => {
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: window.location.origin + '/download/' + paymentIntent?.id,
+          // No return_url needed since we're handling navigation in code
           receipt_email: email,
         },
         redirect: 'if_required',
