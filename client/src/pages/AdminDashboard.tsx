@@ -161,16 +161,16 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="h-80">
                   {chartData.length > 0 ? (
-                    <ChartContainer>
-                      <ChartLegend />
-                      <Chart type="pie">
-                        <ChartSeries data={chartData}>
-                          {chartData.map((item, index) => (
-                            <ChartItem key={index} value={item.value} name={item.name} />
-                          ))}
-                        </ChartSeries>
-                      </Chart>
-                    </ChartContainer>
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        {chartData.map((item, index) => (
+                          <div key={index} className="mb-2">
+                            <span className="font-medium">{item.name}: </span>
+                            ${item.value.toFixed(2)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                       No sales data available
