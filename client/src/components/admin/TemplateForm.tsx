@@ -84,6 +84,10 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
     fileSize?: number;
     fileType?: string;
     originalName?: string;
+    imageData?: string;
+    imageSize?: number;
+    imageType?: string;
+    imageOriginalName?: string;
   }>({});
 
   // Transform array fields into string for editing

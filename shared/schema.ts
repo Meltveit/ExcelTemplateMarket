@@ -28,9 +28,19 @@ export const templates = pgTable("templates", {
   stripeProductId: text("stripe_product_id"),
   stripePriceId: text("stripe_price_id"),
   filePath: text("file_path").notNull(),
-  fileData: text("file_data"), // Optional field to store file content directly in DB if needed
+  
+  // Excel template file data
+  fileData: text("file_data"), // Store Excel file as base64 in the database
   fileSize: integer("file_size"), // Size of the file in bytes
   fileType: text("file_type"), // MIME type of the file
+  originalName: text("original_name"), // Original filename
+  
+  // Main image data
+  imageData: text("image_data"), // Store main image as base64 in the database
+  imageSize: integer("image_size"), // Size of the image in bytes
+  imageType: text("image_type"), // MIME type of the image
+  imageOriginalName: text("image_original_name"), // Original image filename
+  
   downloadCount: integer("download_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
