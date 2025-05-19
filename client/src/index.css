@@ -67,24 +67,44 @@
     color: #000000; /* Ensure body text is black */
   }
   
-  h1, h2, h3, h4, h5, h6 {
-    color: #000000; /* Make headings black */
-    font-weight: 600; /* Make headings slightly bolder */
+  /* Make headings black except in hero sections */
+  h1:not(.hero-gradient h1), 
+  h2:not(.hero-gradient h2), 
+  h3:not(.hero-gradient h3), 
+  h4:not(.hero-gradient h4), 
+  h5:not(.hero-gradient h5), 
+  h6:not(.hero-gradient h6) {
+    color: #000000;
+    font-weight: 600;
   }
   
-  p, span, div, li {
-    color: #000000; /* Make paragraph and other text black */
+  /* Make text black except in hero sections or explicitly styled areas */
+  p:not(.hero-gradient p), 
+  span:not(.hero-gradient span), 
+  div:not(.hero-gradient div):not(.text-white), 
+  li:not(.hero-gradient li) {
+    color: #000000;
   }
   
-  /* Increase contrast for various components */
+  /* Increase contrast for muted text */
   .text-muted-foreground {
-    color: #333333 !important; /* Override any muted text to be darker */
+    color: #333333 !important;
   }
   
   /* Ensure labels are visible */
   label {
     color: #000000;
     font-weight: 500;
+  }
+  
+  /* Preserve white text in hero sections */
+  .hero-gradient h1,
+  .hero-gradient h2,
+  .hero-gradient h3,
+  .hero-gradient p,
+  .hero-gradient span,
+  .hero-gradient div {
+    color: white !important;
   }
 }
 
