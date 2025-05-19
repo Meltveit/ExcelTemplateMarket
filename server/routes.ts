@@ -317,12 +317,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No template file uploaded" });
       }
       
-      // Return the file path for saving in the database
+      // Read the file data
       const filePath = `/uploads/templates/${req.file.filename}`;
+      const fullPath = path.join(process.cwd(), 'public', filePath);
+      
+      // Read the file data for database storage
+      const fileData = fs.readFileSync(fullPath);
+      const base64Data = fileData.toString('base64');
+      
       res.json({ 
         success: true, 
         filePath: filePath,
-        originalName: req.file.originalname 
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        fileData: base64Data // Sending the base64 data to be stored in the database
       });
     } catch (error: any) {
       res.status(500).json({ message: `Error uploading template: ${error.message}` });
@@ -336,12 +345,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No image file uploaded" });
       }
       
-      // Return the file path for saving in the database
+      // Read the file data
       const filePath = `/uploads/images/${req.file.filename}`;
+      const fullPath = path.join(process.cwd(), 'public', filePath);
+      
+      // Read the file data for database storage
+      const fileData = fs.readFileSync(fullPath);
+      const base64Data = fileData.toString('base64');
+      
       res.json({ 
         success: true, 
         filePath: filePath,
-        originalName: req.file.originalname 
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        fileData: base64Data // Sending the base64 data to be stored in the database
       });
     } catch (error: any) {
       res.status(500).json({ message: `Error uploading image: ${error.message}` });

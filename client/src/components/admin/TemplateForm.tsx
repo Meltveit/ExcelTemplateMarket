@@ -165,7 +165,18 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
 
       const data = await response.json();
       if (data.success) {
+        // Store both the path and the file data
         form.setValue('filePath', data.filePath);
+        
+        // Store additional file information in form state for database storage
+        // These will be used when submitting the form
+        setTemplateData({
+          fileData: data.fileData,
+          fileSize: data.fileSize,
+          fileType: data.fileType,
+          originalName: data.originalName
+        });
+        
         toast({
           title: "Template Uploaded",
           description: `${file.name} has been uploaded successfully.`,
