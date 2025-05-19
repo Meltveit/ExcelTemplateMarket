@@ -37,18 +37,18 @@ const Header = () => {
             >
               Templates
             </Link>
-            <Link 
-              href="/#how-it-works" 
+            <a 
+              href="#how-it-works" 
               className="font-medium hover:text-primary transition-colors"
             >
               How It Works
-            </Link>
-            <Link 
-              href="/#faq" 
+            </a>
+            <a 
+              href="#faq" 
               className="font-medium hover:text-primary transition-colors"
             >
-              FAQs
-            </Link>
+              FAQ
+            </a>
             <Link 
               href="/contact" 
               className={`font-medium ${isActive('/contact') ? 'text-primary' : 'hover:text-primary transition-colors'}`}
@@ -81,20 +81,20 @@ const Header = () => {
             >
               Templates
             </Link>
-            <Link 
-              href="/#how-it-works" 
+            <a 
+              href="#how-it-works" 
               className="block font-medium hover:text-primary"
               onClick={closeMobileMenu}
             >
               How It Works
-            </Link>
-            <Link 
-              href="/#faq" 
+            </a>
+            <a 
+              href="#faq" 
               className="block font-medium hover:text-primary"
               onClick={closeMobileMenu}
             >
-              FAQs
-            </Link>
+              FAQ
+            </a>
             <Link 
               href="/contact" 
               className={`block font-medium ${isActive('/contact') ? 'text-primary' : 'hover:text-primary'}`}
