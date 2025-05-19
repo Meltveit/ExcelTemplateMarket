@@ -123,13 +123,7 @@ const AdminLogin = () => {
               </form>
             </Form>
             
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              <p>
-                Admin credentials:<br />
-                Email: meltveit00@gmail.com<br />
-                Password: Chriss3214
-              </p>
-            </div>
+            {/* Admin credentials removed for security */}
             
             <div className="mt-4 text-center">
               <Button variant="link" onClick={() => navigate('/')}>
