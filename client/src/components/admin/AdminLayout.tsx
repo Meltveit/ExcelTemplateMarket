@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import useAuth from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -19,8 +21,10 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout = ({ children, title }: AdminLayoutProps) => {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { logout } = useAuth();
+  const { toast } = useToast();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -28,6 +32,15 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
 
   const isActive = (path: string) => {
     return location === path;
+  };
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login');
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
   };
 
   return (
@@ -93,7 +106,11 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
               View Site
             </Button>
           </Link>
-          <Button variant="ghost" className="w-full justify-start">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start"
+            onClick={handleLogout}
+          >
             <LogOut className="mr-2 h-5 w-5" />
             Logout
           </Button>
