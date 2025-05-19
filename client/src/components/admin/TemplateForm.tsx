@@ -79,6 +79,12 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
   const templateFileInputRef = useRef<HTMLInputElement>(null);
   const imageFileInputRef = useRef<HTMLInputElement>(null);
   const [previewData, setPreviewData] = useState<Partial<Template>>(defaultValues || {});
+  const [templateData, setTemplateData] = useState<{
+    fileData?: string;
+    fileSize?: number;
+    fileType?: string;
+    originalName?: string;
+  }>({});
 
   // Transform array fields into string for editing
   const prepareDefaultValues = (values: any) => {
@@ -259,19 +265,31 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
+      // Add file data to the form values
+      const formDataWithFiles = {
+        ...values,
+        // Include file data if available
+        ...(templateData.fileData && {
+          fileData: templateData.fileData,
+          fileSize: templateData.fileSize,
+          fileType: templateData.fileType
+        })
+      };
+      
       if (isEdit && templateId) {
-        await apiRequest('PUT', `/api/admin/templates/${templateId}`, values);
+        await apiRequest('PUT', `/api/admin/templates/${templateId}`, formDataWithFiles);
         toast({
           title: "Template updated",
           description: "The template has been successfully updated.",
         });
       } else {
-        await apiRequest('POST', '/api/admin/templates', values);
+        await apiRequest('POST', '/api/admin/templates', formDataWithFiles);
         toast({
           title: "Template created",
           description: "Your new template has been successfully created.",
         });
         form.reset();
+        setTemplateData({}); // Clear template data
       }
       
       // Invalidate templates query to refresh data

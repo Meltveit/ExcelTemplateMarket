@@ -259,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // File download endpoint
+  // File download endpoint - now serves files from database if available
   app.get("/api/download/:orderId/:templateId/:token", async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
@@ -280,19 +280,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Increment the download count
       await dbStorage.incrementOrderDownloadCount(orderId);
       
-      // In a real app, you would serve the actual file here
-      // For now, we'll just return a success message
+      // Check if we have the file data in the database
+      if (template.fileData) {
+        // We have the file data stored in the database as base64
+        const fileBuffer = Buffer.from(template.fileData, 'base64');
+        
+        // Set appropriate headers for Excel file download
+        res.setHeader('Content-Type', template.fileType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.name}.xlsx"`);
+        res.setHeader('Content-Length', fileBuffer.length);
+        
+        // Send the file data directly from the database
+        return res.send(fileBuffer);
+      }
+      
+      // Fallback to file system if database data not available
       const filePath = path.join(process.cwd(), 'public', template.filePath);
       
-      // Check if file exists
+      // Check if file exists on disk
       if (fs.existsSync(filePath)) {
         res.download(filePath, `${template.name}.xlsx`);
       } else {
-        // For development, since we don't have real files
-        res.json({
-          success: true,
-          message: "This is where you would download your Excel template.",
-          templateName: template.name
+        // If we can't find the file, return an error
+        res.status(404).json({ 
+          success: false, 
+          message: "Template file not found. Please contact support." 
         });
       }
     } catch (error: any) {
