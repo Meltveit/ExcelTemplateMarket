@@ -183,6 +183,8 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
           originalName: data.originalName
         });
         
+        console.log('Successfully stored template data, size:', data.fileSize);
+        
         toast({
           title: "Template Uploaded",
           description: `${file.name} has been uploaded successfully.`,
@@ -232,7 +234,20 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
 
       const data = await response.json();
       if (data.success) {
+        // Set the form value for the main image path
         form.setValue('mainImage', data.filePath);
+        
+        // Store image data in the templateData for database storage
+        setTemplateData({
+          ...templateData,
+          imageData: data.fileData,
+          imageSize: data.fileSize,
+          imageType: data.fileType,
+          imageOriginalName: data.originalName
+        });
+        
+        console.log('Successfully stored image data, size:', data.fileSize);
+        
         toast({
           title: "Image Uploaded",
           description: `${file.name} has been uploaded successfully.`,
@@ -268,11 +283,19 @@ const TemplateForm = ({ templateId, defaultValues, isEdit = false }: TemplateFor
       // Add file data to the form values
       const formDataWithFiles = {
         ...values,
-        // Include file data if available
+        // Include template file data if available
         ...(templateData.fileData && {
           fileData: templateData.fileData,
           fileSize: templateData.fileSize,
-          fileType: templateData.fileType
+          fileType: templateData.fileType,
+          originalName: templateData.originalName
+        }),
+        // Include image data if available
+        ...(templateData.imageData && {
+          imageData: templateData.imageData,
+          imageSize: templateData.imageSize,
+          imageType: templateData.imageType,
+          imageOriginalName: templateData.imageOriginalName
         })
       };
       

@@ -378,13 +378,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create template with form data
+  // Create template with form data including file data
   app.post("/api/admin/templates", isAdmin, async (req, res) => {
     try {
       const template = req.body;
+      
+      console.log('Creating template with file data:', {
+        hasFileData: !!template.fileData,
+        fileSize: template.fileSize,
+        fileType: template.fileType
+      });
+      
+      // Create the template with all data including file content
       const newTemplate = await dbStorage.createTemplate(template);
-      res.status(201).json(newTemplate);
+      
+      // Return the template without the file data to reduce response size
+      const { fileData, ...templateWithoutFileData } = newTemplate;
+      res.status(201).json(templateWithoutFileData);
     } catch (error) {
+      console.error('Template creation error:', error);
       res.status(500).json({ message: "Failed to create template" });
     }
   });
@@ -393,14 +405,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const templateUpdate = req.body;
+      
+      console.log('Updating template with file data:', {
+        hasFileData: !!templateUpdate.fileData,
+        fileSize: templateUpdate.fileSize,
+        fileType: templateUpdate.fileType
+      });
+      
+      // Update the template with all data including file content
       const updatedTemplate = await dbStorage.updateTemplate(id, templateUpdate);
       
       if (!updatedTemplate) {
         return res.status(404).json({ message: "Template not found" });
       }
       
-      res.json(updatedTemplate);
+      // Return the template without the file data to reduce response size
+      const { fileData, ...templateWithoutFileData } = updatedTemplate;
+      res.json(templateWithoutFileData);
     } catch (error) {
+      console.error('Template update error:', error);
       res.status(500).json({ message: "Failed to update template" });
     }
   });
