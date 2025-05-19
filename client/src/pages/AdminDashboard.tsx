@@ -73,13 +73,13 @@ const AdminDashboard = () => {
     
     acc[template.category] += revenue;
     return acc;
-  }, {});
+  }, {}) || {}; // Provide default empty object to prevent undefined
 
   // Format for chart
-  const chartData = salesByCategory ? Object.entries(salesByCategory).map(([category, amount]) => ({
+  const chartData = Object.entries(salesByCategory).map(([category, amount]) => ({
     name: category,
     value: amount,
-  })) : [];
+  }));
 
   return (
     <>
