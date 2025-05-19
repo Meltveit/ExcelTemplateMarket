@@ -7,8 +7,8 @@ node_modules
 coverage
 
 # Production
-dist
 build
+dist
 
 # Misc
 .DS_Store
@@ -27,17 +27,16 @@ yarn-error.log*
 # Editor
 .vscode
 .idea
+*.swp
+*.swo
 
-# TypeScript
+# Runtime
 *.tsbuildinfo
+.eslintcache
 
-# Replit
+# Replit specific
 .config
 .upm
 .breakpoints
 replit.nix
 .replit
-
-# Project specific
-public/uploads
-generated-icon.png
